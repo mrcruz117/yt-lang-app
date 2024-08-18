@@ -36,6 +36,8 @@ chunk_length_ms = 1000 * 60 * 10  # 10 min
 os.system("rm -rf chunks/*")
 os.system("rm -rf transcriptions/*")
 
+total_chunks = len_in_ms // chunk_length_ms + 1
+
 for i in range(0, len_in_ms, chunk_length_ms):
     print(f"Processing chunk {i} to {i + chunk_length_ms}")
     chunk = audio_segment[i : i + chunk_length_ms]
@@ -50,3 +52,6 @@ for i in range(0, len_in_ms, chunk_length_ms):
     # write to file in /transcriptions
     with open("transcriptions/transcription_" + yt.video_id + ".txt", "a") as f:
         f.write(transcription.text)
+    current_chunk = i // chunk_length_ms + 1
+    percentage_completion = (current_chunk / total_chunks) * 100
+    print(f"Completed {percentage_completion:.2f}%")
