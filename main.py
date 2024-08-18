@@ -11,8 +11,6 @@ load_dotenv()
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-print("KEY: ", OPENAI_API_KEY)
-
 client = OpenAI(api_key=OPENAI_API_KEY)
 
 yt_vid_link = "https://www.youtube.com/watch?v=RA0NikgVcg0"
@@ -22,10 +20,11 @@ print(yt.title)
 
 
 audio_streams = yt.streams.filter(only_audio=True)
+len_in_sec = yt.length
+len_in_ms = len_in_sec * 1000
 
 # print("Audio Streams: ", audio_streams)
 ys = yt.streams.get_audio_only()
-print(ys)
 
 ys.download(mp3=True, output_path="downloads")
 
@@ -34,21 +33,37 @@ file_path = "downloads/" + yt.title + ".mp3"
 # audio_file = open(file_path, "rb")
 audio_segment = AudioSegment.from_file(file_path, "mp4")
 
-chunk_length_ms = 1000 * 60  # 1 min
+chunk_length_ms = 10000 * 60  # 10 min
 
-first_1_minute = audio_segment[:chunk_length_ms]
+# clear folder contents
+os.system("rm -rf chunks/*")
+os.system("rm -rf transcriptions/*")
+
+for i in range(0, len_in_ms, chunk_length_ms):
+    print(f"Processing chunk {i} to {i + chunk_length_ms}")
+    chunk = audio_segment[i : i + chunk_length_ms]
+    chunk.export(f"chunks/chunk_{i}.mp3", format="mp3")
+
+    # get transcription
+    print("Transcribing chunk...")
+    audio_file = open(f"chunks/chunk_{i}.mp3", "rb")
+    transcription = client.audio.transcriptions.create(
+        model="whisper-1", file=audio_file
+    )
+    # write to file in /transcriptions
+    with open("transcriptions/transcription_" + yt.video_id + ".txt", "a") as f:
+        f.write(transcription.text)
+
 
 # Convert the AudioSegment to a file-like object
-first_1_minute.export("chunks/clip.mp3", format="mp3")
+# first_1_minute.export("chunks/clip.mp3", format="mp3")
 
-audio_file = open("chunks/clip.mp3", "rb")
+# audio_file = open("chunks/clip.mp3", "rb")
 
 
-transcription = client.audio.transcriptions.create(
-    model="whisper-1", file=audio_file
-)
+# transcription = client.audio.transcriptions.create(model="whisper-1", file=audio_file)
 
-print(transcription.text)
+# print(transcription.text)
 
 # for i, chunk in enumerate(chunks):
 #     chunk_io = io.BytesIO()

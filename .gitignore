@@ -1,4 +1,5 @@
 venv
 downloads
-.env
 chunks
+transcriptions
+.env
