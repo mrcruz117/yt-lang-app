@@ -15,6 +15,10 @@ client = OpenAI(api_key=OPENAI_API_KEY)
 yt_vid_link = "https://www.youtube.com/watch?v=RA0NikgVcg0"
 
 yt = YouTube(yt_vid_link, on_progress_callback=on_progress)
+
+# for caching purposes later
+vid_uuid = yt.video_id
+
 print(yt.title)
 
 
