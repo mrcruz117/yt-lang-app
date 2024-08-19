@@ -68,7 +68,7 @@ for i in range(0, len_in_ms, chunk_length_ms):
     transcription = client.audio.transcriptions.create(
         model="whisper-1",
         file=audio_file,
-        language="ja",
+        language="fr",
     )
     # audio_samples = audio_file_to_numpy(f"chunks/chunk_{i}.mp3")
     # audio_samples = audio_samples.astype(np.float32) / 32768.0
