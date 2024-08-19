@@ -4,8 +4,6 @@ from openai import OpenAI
 import os
 from dotenv import load_dotenv
 from pydub import AudioSegment
-import whisper
-import numpy as np
 import time
 
 load_dotenv()
@@ -14,15 +12,6 @@ load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 client = OpenAI(api_key=OPENAI_API_KEY)
-
-
-def audio_file_to_numpy(file_path):
-    audio_segment = AudioSegment.from_file(file_path)
-    samples = np.array(audio_segment.get_array_of_samples())
-    return samples
-
-
-model = whisper.load_model("large-v3")
 
 
 yt_vid_link = "https://www.youtube.com/watch?v=bWfq8Re30Fg"
@@ -69,7 +58,6 @@ for i in range(0, len_in_ms, chunk_length_ms):
         model="whisper-1",
         file=audio_file,
         language="fr",
-
     )
     # audio_samples = audio_file_to_numpy(f"chunks/chunk_{i}.mp3")
     # audio_samples = audio_samples.astype(np.float32) / 32768.0
