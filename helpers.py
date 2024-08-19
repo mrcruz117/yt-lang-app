@@ -43,7 +43,7 @@ def dl_yt_audio(link, target_path):
     return vid_uuid, len_in_ms, yt.title
 
 
-def transcribe_or_translate_audio(file_path, len_in_ms, vid_uuid):
+def transcribe_or_translate_audio(file_path, len_in_ms, vid_uuid, lang="en"):
     audio_segment = AudioSegment.from_file(file_path, "mp4")
 
     chunk_length_ms = 1000 * 60 * 20  # 20 min
@@ -68,7 +68,7 @@ def transcribe_or_translate_audio(file_path, len_in_ms, vid_uuid):
         transcription = client.audio.transcriptions.create(
             model="whisper-1",
             file=audio_file,
-            language="fr",
+            language=lang,
         )
 
         end_time = time.time()
@@ -81,3 +81,25 @@ def transcribe_or_translate_audio(file_path, len_in_ms, vid_uuid):
         current_chunk = i // chunk_length_ms + 1
         percentage_completion = (current_chunk / total_chunks) * 100
         print(f"Completed {percentage_completion:.2f}%")
+
+
+def lang_select():
+    lang_choices = ["en", "es", "fr", "de", "it", "ja"]
+
+    print("Please choose a language from the following options:")
+    for i, lang in enumerate(lang_choices, 1):
+        print(f"{i}. {lang}")
+
+    # Prompt the user to choose a language
+    choice = int(input("Enter the number corresponding to your choice: "))
+
+    # Validate the user's choice
+    if 1 <= choice <= len(lang_choices):
+        chosen_lang = lang_choices[choice - 1]
+        print(f"You have chosen: {chosen_lang}")
+    else:
+        print("Invalid choice. Please run the program again and choose a valid option.")
+
+    chosen_lang = lang_choices[choice - 1]
+
+    return chosen_lang
