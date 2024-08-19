@@ -3,4 +3,5 @@ downloads/*
 chunks/*
 transcriptions/*
 __pycache__/
+database.json
 .env

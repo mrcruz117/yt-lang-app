@@ -89,7 +89,7 @@ def transcribe_or_translate_audio(file_path, len_in_ms, vid_uuid, lang="en"):
         print(f"Translation took {end_time - start_time:.2f} seconds")
 
         # write to file in /transcriptions
-        with open("transcriptions/transcription_" + vid_uuid + ".txt", "a") as f:
+        with open(f"transcriptions/{lang}_{vid_uuid}.txt", "a") as f:
             f.write(transcription.text)
         current_chunk = i // chunk_length_ms + 1
         percentage_completion = (current_chunk / total_chunks) * 100
@@ -101,5 +101,5 @@ def lang_select():
     lang_selection = questionary.select(
         "Please choose a language:", choices=lang_choices
     ).ask()
-
+    typer.echo(f"Selected language: {lang_selection}")
     return lang_selection
