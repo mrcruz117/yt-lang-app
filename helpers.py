@@ -7,6 +7,9 @@ import os
 from dotenv import load_dotenv
 from pydub import AudioSegment
 import time
+import typer
+import questionary
+from rich.progress import Progress, SpinnerColumn, TextColumn
 
 load_dotenv()
 
@@ -16,7 +19,7 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 client = OpenAI(api_key=OPENAI_API_KEY)
 
 
-def dl_yt_audio(link, target_path):
+def dl_yt_audio(link="", target_path="downloads"):
     """
     Downloads the audio from a YouTube video and saves it to the target path.
 
@@ -25,12 +28,20 @@ def dl_yt_audio(link, target_path):
     and returns the length of the video in milliseconds. for chunking
     """
 
+    link = questionary.text("Please enter the YouTube video link:").ask()
+
     yt = YouTube(link, on_progress_callback=on_progress)
 
     # for caching purposes later
     vid_uuid = yt.video_id
 
-    print(yt.title)
+    # Confirm the video name before downloading
+    confirm = questionary.confirm(
+        f"\n'{yt.title}'\n\nConfirm download?", default=True
+    ).ask()
+    if not confirm:
+        typer.echo("Download cancelled.")
+        return
 
     audio_streams = yt.streams.filter(only_audio=True)
     len_in_sec = yt.length
@@ -39,6 +50,8 @@ def dl_yt_audio(link, target_path):
     ys = yt.streams.get_audio_only()
 
     ys.download(mp3=True, output_path=target_path)
+
+    typer.echo(f"✅ Download Complete!")
 
     return vid_uuid, len_in_ms, yt.title
 
@@ -85,21 +98,8 @@ def transcribe_or_translate_audio(file_path, len_in_ms, vid_uuid, lang="en"):
 
 def lang_select():
     lang_choices = ["en", "es", "fr", "de", "it", "ja"]
+    lang_selection = questionary.select(
+        "Please choose a language:", choices=lang_choices
+    ).ask()
 
-    print("Please choose a language from the following options:")
-    for i, lang in enumerate(lang_choices, 1):
-        print(f"{i}. {lang}")
-
-    # Prompt the user to choose a language
-    choice = int(input("Enter the number corresponding to your choice: "))
-
-    # Validate the user's choice
-    if 1 <= choice <= len(lang_choices):
-        chosen_lang = lang_choices[choice - 1]
-        print(f"You have chosen: {chosen_lang}")
-    else:
-        print("Invalid choice. Please run the program again and choose a valid option.")
-
-    chosen_lang = lang_choices[choice - 1]
-
-    return chosen_lang
+    return lang_selection
