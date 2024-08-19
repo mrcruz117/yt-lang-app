@@ -2,4 +2,5 @@ venv
 downloads/*
 chunks/*
 transcriptions/*
+__pycache__/
 .env

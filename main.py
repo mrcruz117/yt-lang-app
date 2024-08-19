@@ -5,6 +5,7 @@ import os
 from dotenv import load_dotenv
 from pydub import AudioSegment
 import time
+from helpers import dl_yt_audio
 
 load_dotenv()
 
@@ -16,23 +17,9 @@ client = OpenAI(api_key=OPENAI_API_KEY)
 
 yt_vid_link = "https://www.youtube.com/watch?v=bWfq8Re30Fg"
 
-yt = YouTube(yt_vid_link, on_progress_callback=on_progress)
+vid_uuid, len_in_ms, vid_title = dl_yt_audio(link=yt_vid_link, target_path="downloads")
 
-# for caching purposes later
-vid_uuid = yt.video_id
-
-print(yt.title)
-
-
-audio_streams = yt.streams.filter(only_audio=True)
-len_in_sec = yt.length
-len_in_ms = len_in_sec * 1000
-
-ys = yt.streams.get_audio_only()
-
-ys.download(mp3=True, output_path="downloads")
-
-file_path = "downloads/" + yt.title + ".mp3"
+file_path = "downloads/" + vid_title + ".mp3"
 
 audio_segment = AudioSegment.from_file(file_path, "mp4")
 
@@ -43,6 +30,8 @@ os.system("rm -rf chunks/*")
 os.system("rm -rf transcriptions/*")
 
 total_chunks = len_in_ms // chunk_length_ms + 1
+
+start_time = time.time()
 
 for i in range(0, len_in_ms, chunk_length_ms):
     print(f"Processing chunk {i} to {i + chunk_length_ms}")
@@ -59,20 +48,13 @@ for i in range(0, len_in_ms, chunk_length_ms):
         file=audio_file,
         language="fr",
     )
-    # audio_samples = audio_file_to_numpy(f"chunks/chunk_{i}.mp3")
-    # audio_samples = audio_samples.astype(np.float32) / 32768.0
-    # get translation
-    start_time = time.time()
-    # translation = model.transcribe( f"", language="ja", task="translate")
-    # translation = model.transcribe(audio_samples, language="ja", task="translate")
+
     end_time = time.time()
 
     print(f"Translation took {end_time - start_time:.2f} seconds")
-    # Print or use the translation
-    # print("Translation to Japanese:", translation["text"])
 
     # write to file in /transcriptions
-    with open("transcriptions/transcription_" + yt.video_id + ".txt", "a") as f:
+    with open("transcriptions/transcription_" + vid_uuid + ".txt", "a") as f:
         f.write(transcription.text)
     current_chunk = i // chunk_length_ms + 1
     percentage_completion = (current_chunk / total_chunks) * 100
