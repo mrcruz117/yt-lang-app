@@ -9,7 +9,20 @@ from pydub import AudioSegment
 import time
 import typer
 import questionary
-from rich.progress import Progress, SpinnerColumn, TextColumn
+from rich.progress import (
+    Progress,
+    SpinnerColumn,
+    TextColumn,
+    TimeElapsedColumn,
+    BarColumn,
+)
+from rich.console import Console
+from db.db_funcs import add_media_info
+import re
+
+step_progress = Progress(
+    SpinnerColumn("simpleDots"),
+)
 
 load_dotenv()
 
@@ -17,6 +30,14 @@ load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 client = OpenAI(api_key=OPENAI_API_KEY)
+console = Console()
+
+system_prompt = (
+    "You are a language model assistant helping a user transcribe and translate a YouTube video. ",
+    "You are an expert on the CEFR scale and can provide accurate translations in multiple languages ",
+    "while also converting the content to a different level on the CEFR scale. ",
+    "(A1, A2, B1, B2, C1, C2) ",
+)
 
 
 def dl_yt_audio(link="", target_path="downloads"):
@@ -27,13 +48,15 @@ def dl_yt_audio(link="", target_path="downloads"):
 
     and returns the length of the video in milliseconds. for chunking
     """
-
-    link = questionary.text("Please enter the YouTube video link:").ask()
+    if not link:
+        link = questionary.text("Please enter the YouTube video link:").ask()
 
     yt = YouTube(link, on_progress_callback=on_progress)
 
     # for caching purposes later
     vid_uuid = yt.video_id
+
+    # add_media_info(yt)
 
     # Confirm the video name before downloading
     confirm = questionary.confirm(
@@ -51,7 +74,7 @@ def dl_yt_audio(link="", target_path="downloads"):
 
     ys.download(mp3=True, output_path=target_path)
 
-    typer.echo(f"✅ Download Complete!")
+    console.print("[green]✅ Download Complete![/green]")
 
     return vid_uuid, len_in_ms, yt.title
 
@@ -65,35 +88,93 @@ def transcribe_or_translate_audio(file_path, len_in_ms, vid_uuid, lang="en"):
     os.system("rm -rf chunks/*")
     os.system("rm -rf transcriptions/*")
 
-    total_chunks = len_in_ms // chunk_length_ms + 1
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("{task.description}"),
+        BarColumn(),
+        TextColumn("{task.percentage:.0f}%"),
+        TimeElapsedColumn(),
+    ) as progress:
+        translate_progress = progress.add_task("[blue]Translating: ", total=len_in_ms)
+        count = 0
+        for i in range(0, len_in_ms, chunk_length_ms):
 
-    start_time = time.time()
+            chunk = audio_segment[i : i + chunk_length_ms]
+            chunk.export(f"chunks/chunk_{count}.mp3", format="mp3")
 
-    for i in range(0, len_in_ms, chunk_length_ms):
-        print(f"Processing chunk {i} to {i + chunk_length_ms}")
-        chunk = audio_segment[i : i + chunk_length_ms]
-        chunk.export(f"chunks/chunk_{i}.mp3", format="mp3")
+            # get transcription/translation
+            audio_file = open(f"chunks/chunk_{count}.mp3", "rb")
+            count += 1
+            transcription = client.audio.transcriptions.create(
+                model="whisper-1",
+                file=audio_file,
+                language=lang,
+            )
+            # post process here
 
-        # get transcription
-        print("Transcribing/translating chunk...")
-        audio_file = open(f"chunks/chunk_{i}.mp3", "rb")
-        # This worked! :)
-        transcription = client.audio.transcriptions.create(
-            model="whisper-1",
-            file=audio_file,
-            language=lang,
+            # write to file in /transcriptions
+            with open(f"transcriptions/{vid_uuid}_{lang}.txt", "a") as f:
+                f.write(transcription.text)
+
+            progress.update(translate_progress, advance=chunk_length_ms)
+        progress.stop()
+        console.print("[green]✅ Transcription Complete![/green]")
+
+
+def generate_corrected_transcript(path):
+    full_prompt = (
+        "".join(system_prompt)
+        + " Try to keep a comparable length to the source. Convert this to A1 level."
+    )
+    text = ""
+    with open(path, "r") as f:
+        text = f.read()
+
+    # split text into complete sentences
+    sentences = re.split(r"[.!?]", text)
+
+    chunk = ""
+    path = path.split(".")
+    path = path[0] + "_a1." + path[1]
+    for sentence in sentences:
+        if len(chunk) + len(sentence) < 1000:
+            chunk += sentence + ". "
+        else:
+            chunk = chunk + "."
+
+            print("chunk formed: ", chunk[:50])
+            stream = client.chat.completions.create(
+                model="gpt-4o",
+                messages=[
+                    {"role": "system", "content": full_prompt},
+                    {"role": "user", "content": chunk},
+                ],
+                stream=True,
+            )
+            # typer.echo(stream)
+
+            for chunk in stream:
+                if chunk.choices[0].delta.content is not None:
+
+                    with open(f"{path}", "a") as f:
+                        f.write(chunk.choices[0].delta.content)
+            chunk = sentence + ". "
+    if chunk.strip():
+        print("final chunk formed: ", chunk)
+        stream = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {"role": "system", "content": full_prompt},
+                {"role": "user", "content": chunk},
+            ],
+            stream=True,
         )
 
-        end_time = time.time()
-
-        print(f"Translation took {end_time - start_time:.2f} seconds")
-
-        # write to file in /transcriptions
-        with open(f"transcriptions/{lang}_{vid_uuid}.txt", "a") as f:
-            f.write(transcription.text)
-        current_chunk = i // chunk_length_ms + 1
-        percentage_completion = (current_chunk / total_chunks) * 100
-        print(f"Completed {percentage_completion:.2f}%")
+        for chunk in stream:
+            if chunk.choices[0].delta.content is not None:
+                with open(f"{path}", "a") as f:
+                    f.write(chunk.choices[0].delta.content)
+    return stream
 
 
 def lang_select():
@@ -101,5 +182,4 @@ def lang_select():
     lang_selection = questionary.select(
         "Please choose a language:", choices=lang_choices
     ).ask()
-    typer.echo(f"Selected language: {lang_selection}")
     return lang_selection
