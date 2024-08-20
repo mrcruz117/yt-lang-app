@@ -19,6 +19,7 @@ from rich.progress import (
 from rich.console import Console
 from db.db_funcs import add_media_info
 import re
+from pathlib import Path
 
 step_progress = Progress(
     SpinnerColumn("simpleDots"),
@@ -177,9 +178,75 @@ def generate_corrected_transcript(path):
     return stream
 
 
+def text_to_speech(path="transcriptions/jlSsxyWxlaM_es.txt"):
+    # 4000 char chunk limit
+    with open(path, "r") as f:
+        text = f.read()
+
+    sentences = re.split(r"[.!?]", text)
+    voice = "alloy"  # "onyx"
+
+    chunk = ""
+    file_name = Path(path).stem
+    temp_files = []
+    speech_file_path = f"text_to_speech/{file_name}_tts.mp3"
+    for i, sentence in enumerate(sentences):
+        if len(chunk) + len(sentence) < 4000:
+            chunk += sentence + ". "
+        else:
+            chunk = chunk + "."
+
+            print("chunk formed: ", chunk[:50])
+
+            response = client.audio.speech.create(
+                model="tts-1",
+                voice=voice,
+                input=chunk,
+            )
+
+            temp_file_path = f"text_to_speech/temp/temp_chunk_{i}.mp3"
+            response.stream_to_file(temp_file_path)
+            temp_files.append(temp_file_path)
+            chunk = sentence + ". "
+    if chunk.strip():
+        print("final chunk formed: ", chunk[:50])
+        temp_file_path = f"text_to_speech/temp/temp_chunk_final.mp3"
+        response = client.audio.speech.create(
+            model="tts-1",
+            voice=voice,
+            input=chunk,
+        )
+
+        response.stream_to_file(temp_file_path)
+        temp_files.append(temp_file_path)
+
+    # merge all temp files
+    combined = AudioSegment.empty()
+    for temp_file in temp_files:
+        combined += AudioSegment.from_file(temp_file)
+
+    # export to final file
+    combined.export(speech_file_path, format="mp3")
+
+    # Clean up temporary files
+    for temp_file in temp_files:
+        os.remove(temp_file)
+
+
 def lang_select():
-    lang_choices = ["en", "es", "fr", "de", "it", "ja"]
+    lang_choices = ["english", "spanish", "french", "german", "italian", "japanese"]
+
     lang_selection = questionary.select(
         "Please choose a language:", choices=lang_choices
     ).ask()
-    return lang_selection
+
+    lang = {
+        "english": "en",
+        "spanish": "es",
+        "french": "fr",
+        "german": "de",
+        "italian": "it",
+        "japanese": "ja",
+    }
+
+    return lang[lang_selection]

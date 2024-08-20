@@ -3,6 +3,7 @@ from helpers import (
     transcribe_or_translate_audio,
     lang_select,
     generate_corrected_transcript,
+    text_to_speech,
 )
 from assets.logo import logo
 import typer
@@ -45,6 +46,11 @@ def test():
 def convert():
     path = "transcriptions/jlSsxyWxlaM_es.txt"
     generate_corrected_transcript(path)
+
+
+@app.command()
+def tts():
+    text_to_speech()
 
 
 if __name__ == "__main__":
