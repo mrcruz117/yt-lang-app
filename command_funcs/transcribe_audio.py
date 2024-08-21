@@ -81,7 +81,7 @@ def transcribe_audio(lang=""):
             for utterance in transcript.utterances:
                 # $$ is to help separate the clips by speaker
                 clip = f"Speaker {utterance.speaker}: {utterance.text}$$\n"
-                with open(f"transcriptions/{vid_uuid}_{lang}.txt", "a") as f:
+                with open(f"transcriptions/{vid_uuid}.txt", "a") as f:
                     f.write(clip)
 
             progress.update(text_progress, advance=chunk_length_ms)

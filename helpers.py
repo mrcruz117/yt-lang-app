@@ -120,7 +120,7 @@ def transcribe_or_translate_audio(file_path, len_in_ms, vid_uuid, lang="en"):
         os.system("rm -rf chunks/*")
 
 
-def generate_corrected_transcript(path):
+def generate_corrected_transcript(path=None):
 
     file_choices = os.listdir("transcriptions")
 

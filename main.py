@@ -8,24 +8,48 @@ from helpers import (
 )
 from command_funcs.yt import get_yt_data, dl_yt_audio
 from command_funcs.transcribe_audio import transcribe_audio
+from command_funcs.translate_convert import split_by_speaker_and_length
 from assets.logo import logo
 import typer
 from db.db_funcs import get_all
+from rich.console import Console
+
+console = Console()
 
 
 app = typer.Typer()
 
 
-@app.command(help="Download, transcribe, and translate a YouTube video.")
-def dl_and_tr():
-    vid_uuid, len_in_ms, vid_title = dl_yt_audio(target_path="downloads")
-    lang_selection = lang_select()
 
-    file_path = "downloads/" + vid_title + ".mp3"
+@app.command(help="Download Youtube audio. And save metadata.")
+def dl():
+    yt, _ = get_yt_data()
+    link = yt.watch_url
+    dl_yt_audio(link)
 
-    transcribe_or_translate_audio(
-        file_path=file_path, len_in_ms=len_in_ms, vid_uuid=vid_uuid, lang=lang_selection
-    )
+
+@app.command(help="transcribe audio")
+def transcribe():
+    transcribe_audio()
+
+
+@app.command(help="Translates text to different languages and CEFR level.")
+def translate():
+    generate_corrected_transcript()
+
+
+
+
+# @app.command(help="Download, transcribe, and translate a YouTube video.")
+# def dl():
+#     vid_uuid, len_in_ms, vid_title = dl_yt_audio(target_path="downloads")
+#     lang_selection = lang_select()
+
+#     file_path = "downloads/" + vid_title + ".mp3"
+
+#     transcribe_or_translate_audio(
+#         file_path=file_path, len_in_ms=len_in_ms, vid_uuid=vid_uuid, lang=lang_selection
+#     )
 
 
 @app.command(help="Convert a transcript to a different CEFR level.")
@@ -46,8 +70,10 @@ def export():
 
 @app.command(help="dev testing command")
 def test():
-    dl_yt_audio()
-    transcribe_audio()
+    # dl_yt_audio()
+    # transcribe_audio()
+    data = split_by_speaker_and_length("transcriptions/z6GEUawc4uw_.txt")
+    console.print(data)
 
 
 if __name__ == "__main__":

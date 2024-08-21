@@ -10,7 +10,7 @@ from rich.console import Console
 console = Console()
 
 
-def get_yt_data(link):
+def get_yt_data(link=None):
     if not link:
         link = questionary.text("Enter the YouTube link:").ask()
 
@@ -21,7 +21,9 @@ def get_yt_data(link):
     len_in_sec = yt.length
     len_in_ms = len_in_sec * 1000
 
-    add_media_info(yt)
+    exists = get_media_info(vid_uuid)
+    if not exists:
+        add_media_info(yt)
 
     return yt, {"vid_uuid": vid_uuid, "len_in_ms": len_in_ms, "title": yt.title}
 
