@@ -4,6 +4,7 @@ from helpers import (
     lang_select,
     generate_corrected_transcript,
     text_to_speech,
+    export_audio,
 )
 from assets.logo import logo
 import typer
@@ -51,6 +52,11 @@ def convert():
 @app.command()
 def tts():
     text_to_speech()
+
+
+@app.command()
+def export():
+    export_audio()
 
 
 if __name__ == "__main__":
