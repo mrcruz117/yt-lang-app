@@ -72,7 +72,7 @@ def export():
 def test():
     # dl_yt_audio()
     # transcribe_audio()
-    data = split_by_speaker_and_length("transcriptions/z6GEUawc4uw_.txt")
+    data = split_by_speaker_and_length("transcriptions/pt1ogqTqlrs.txt")
     console.print(data)
 
 

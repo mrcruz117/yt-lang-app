@@ -42,7 +42,9 @@ def get_media_info(vid_uuid):
     with open(db_path, "r") as f:
         data = json.load(f)
 
-    return data["mediaInfo"][vid_uuid]
+    exists = data["mediaInfo"].get(vid_uuid, None)
+
+    return exists
 
 
 def add_transcription_path(lang, vid_uuid, path):
