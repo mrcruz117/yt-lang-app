@@ -1,11 +1,12 @@
 from helpers import (
-    dl_yt_audio,
+    # dl_yt_audio,
     transcribe_or_translate_audio,
     lang_select,
     generate_corrected_transcript,
     text_to_speech,
     export_audio,
 )
+from command_funcs.yt import get_yt_data, dl_yt_audio
 from command_funcs.transcribe_audio import transcribe_audio
 from assets.logo import logo
 import typer
@@ -27,11 +28,13 @@ def dl_and_tr():
     )
 
 
-@app.command()
+@app.command(help="dev testing command")
 def test():
-    vid_uuid, len_in_ms, vid_title = dl_yt_audio(target_path="downloads")
+    # yt, metadata = get_yt_data("https://www.youtube.com/watch?v=z6GEUawc4uw")
+    dl_yt_audio()
+
     # lang_selection = lang_select()
-    transcribe_audio( len_in_ms=len_in_ms, vid_uuid=vid_uuid, lang="")
+    # transcribe_audio(len_in_ms=len_in_ms, vid_uuid=vid_uuid, lang="")
 
 
 @app.command(help="Convert a transcript to a different CEFR level.")
