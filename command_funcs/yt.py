@@ -42,6 +42,6 @@ def dl_yt_audio(link=None):
     ys = yt.streams.get_audio_only()
 
     target_path = "downloads"
-    ys.download(target_path)
+    ys.download(mp3=True, output_path=target_path)
     console.print("Audio downloaded.")
     return metadata["vid_uuid"], metadata["len_in_ms"], metadata["title"]

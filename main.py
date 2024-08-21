@@ -28,15 +28,6 @@ def dl_and_tr():
     )
 
 
-@app.command(help="dev testing command")
-def test():
-    # yt, metadata = get_yt_data("https://www.youtube.com/watch?v=z6GEUawc4uw")
-    dl_yt_audio()
-
-    # lang_selection = lang_select()
-    # transcribe_audio(len_in_ms=len_in_ms, vid_uuid=vid_uuid, lang="")
-
-
 @app.command(help="Convert a transcript to a different CEFR level.")
 def convert():
     path = "transcriptions/jlSsxyWxlaM_es.txt"
@@ -51,6 +42,12 @@ def tts():
 @app.command(help="Export audio to iTunes.")
 def export():
     export_audio()
+
+
+@app.command(help="dev testing command")
+def test():
+    dl_yt_audio()
+    transcribe_audio()
 
 
 if __name__ == "__main__":
