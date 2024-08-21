@@ -14,8 +14,8 @@ from db.db_funcs import get_all
 app = typer.Typer()
 
 
-@app.command()
-def main():
+@app.command(help="Download, transcribe, and translate a YouTube video.")
+def dl_and_tr():
     vid_uuid, len_in_ms, vid_title = dl_yt_audio(target_path="downloads")
     lang_selection = lang_select()
 
@@ -43,18 +43,18 @@ def test():
     )
 
 
-@app.command()
+@app.command(help="Convert a transcript to a different CEFR level.")
 def convert():
     path = "transcriptions/jlSsxyWxlaM_es.txt"
     generate_corrected_transcript(path)
 
 
-@app.command()
+@app.command(help="Text to speech.")
 def tts():
     text_to_speech()
 
 
-@app.command()
+@app.command(help="Export audio to iTunes.")
 def export():
     export_audio()
 
