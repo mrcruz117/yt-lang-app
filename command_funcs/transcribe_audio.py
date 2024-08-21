@@ -13,12 +13,11 @@ from rich.console import Console
 import assemblyai as aai
 
 
-
 AAI_API_KEY = os.getenv("AAI_API_KEY")
 aai.settings.api_key = AAI_API_KEY
 console = Console()
 transcriber = aai.Transcriber()
-config = aai.TranscriptionConfig(speaker_labels=True)
+
 
 progress = Progress(
     SpinnerColumn(),
@@ -31,6 +30,16 @@ progress = Progress(
 
 def transcribe_audio(len_in_ms, vid_uuid, lang=""):
 
+    expected_speaker_count = questionary.select(
+        "How many speakers are in the audio?", choices=["1", "2", "3", "4", "5"]
+    ).ask()
+    expected_speaker_count = int(expected_speaker_count)
+    config = aai.TranscriptionConfig(
+        speaker_labels=True,
+        speakers_expected=expected_speaker_count,
+        speech_model=aai.SpeechModel.nano,
+        # language_code="en-US",
+    )
     all_items = os.listdir("downloads")
     file_choices = [item for item in all_items if item.endswith(".mp3")]
 
@@ -60,7 +69,7 @@ def transcribe_audio(len_in_ms, vid_uuid, lang=""):
 
             # write to file in /transcriptions
             for utterance in transcript.utterances:
-                clip =f"Speaker {utterance.speaker}: {utterance.text}"
+                clip = f"Speaker {utterance.speaker}: {utterance.text}\n"
                 with open(f"transcriptions/{vid_uuid}_{lang}.txt", "a") as f:
                     f.write(clip)
 
@@ -68,6 +77,7 @@ def transcribe_audio(len_in_ms, vid_uuid, lang=""):
         progress.stop()
         console.print("[green]✅ Transcription Complete![/green]")
         os.system("rm -rf chunks/*")
+
 
 # def transcribe_or_translate_audio(file_path, len_in_ms, vid_uuid, lang="en"):
 #     audio_segment = AudioSegment.from_file(file_path, "mp4")
