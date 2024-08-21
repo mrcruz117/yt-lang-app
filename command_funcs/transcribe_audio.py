@@ -69,7 +69,8 @@ def transcribe_audio(len_in_ms, vid_uuid, lang=""):
 
             # write to file in /transcriptions
             for utterance in transcript.utterances:
-                clip = f"Speaker {utterance.speaker}: {utterance.text}\n"
+                # $$ is to help separate the clips by speaker
+                clip = f"Speaker {utterance.speaker}: {utterance.text}$$\n"
                 with open(f"transcriptions/{vid_uuid}_{lang}.txt", "a") as f:
                     f.write(clip)
 
