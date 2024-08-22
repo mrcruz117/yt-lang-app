@@ -8,7 +8,8 @@ from helpers import (
 )
 from command_funcs.yt import get_yt_data, dl_yt_audio
 from command_funcs.transcribe_audio import transcribe_audio
-from command_funcs.translate_convert import split_by_speaker_and_length
+from command_funcs.translate_convert import translate_convert_text
+from command_funcs.tts import text_to_speech
 from assets.logo import logo
 import typer
 from db.db_funcs import get_all
@@ -18,7 +19,6 @@ console = Console()
 
 
 app = typer.Typer()
-
 
 
 @app.command(help="Download Youtube audio. And save metadata.")
@@ -36,8 +36,6 @@ def transcribe():
 @app.command(help="Translates text to different languages and CEFR level.")
 def translate():
     generate_corrected_transcript()
-
-
 
 
 # @app.command(help="Download, transcribe, and translate a YouTube video.")
@@ -72,8 +70,8 @@ def export():
 def test():
     # dl_yt_audio()
     # transcribe_audio()
-    data = split_by_speaker_and_length("transcriptions/pt1ogqTqlrs.txt")
-    console.print(data)
+    # translate_convert_text()
+    text_to_speech()
 
 
 if __name__ == "__main__":
