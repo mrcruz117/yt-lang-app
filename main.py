@@ -41,6 +41,19 @@ def export():
     export_audio()
 
 
+@app.command(
+    help="Complete process of downloading audio, transcribing, translating, and exporting for a link"
+)
+def process():
+    yt, _ = get_yt_data()
+    link = yt.watch_url
+    dl_yt_audio(link)
+    transcribe_audio()
+    translate_convert_text()
+    text_to_speech()
+    export_audio()
+
+
 # @app.command(help="dev testing command")
 # def test():
 
