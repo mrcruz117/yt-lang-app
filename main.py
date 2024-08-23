@@ -1,8 +1,8 @@
-from helpers import export_audio, lang_select
 from command_funcs.yt import get_yt_data, dl_yt_audio
 from command_funcs.transcribe_audio import transcribe_audio
 from command_funcs.translate_convert import translate_convert_text
 from command_funcs.tts import text_to_speech
+from command_funcs.export import export_audio
 from assets.logo import logo
 import typer
 from db.db_funcs import get_all
