@@ -46,4 +46,4 @@ def dl_yt_audio(link=None):
     target_path = "downloads"
     ys.download(mp3=True, output_path=target_path)
     console.print("Audio downloaded.")
-    return metadata["vid_uuid"], metadata["len_in_ms"], metadata["title"]
+    return f"{target_path}/{metadata['title']}.mp3"

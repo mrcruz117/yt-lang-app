@@ -25,7 +25,7 @@ progress = Progress(
 client = openai.Client()
 
 
-def translate_convert_text(path=None):
+def translate_convert_text(transcript_path=None):
 
     file_choices = os.listdir("transcriptions")
 
@@ -33,10 +33,14 @@ def translate_convert_text(path=None):
         typer.echo("No files to convert.")
         return
     else:
-        file = questionary.select(
-            "Please choose a file to convert level:", choices=file_choices
-        ).ask()
-        path = f"transcriptions/{file}"
+        if not transcript_path:
+            file = questionary.select(
+                "Please choose a file to convert level:", choices=file_choices
+            ).ask()
+            transcript_path = f"transcriptions/{file}"
+    file = None
+    if not file:
+        file = os.path.basename(transcript_path)
 
     lang = lang_select()
     file_name = file.split(".")[0]
@@ -54,11 +58,11 @@ def translate_convert_text(path=None):
         + f" Try to keep a comparable length to the source. {prompt_addition}"
     )
     text = ""
-    with open(path, "r") as f:
+    with open(transcript_path, "r") as f:
         text = f.read()
 
     # split text into complete sentences
-    processed_script = split_by_speaker_and_length(path)
+    processed_script = split_by_speaker_and_length(transcript_path)
 
     with progress:
         convert_progress = progress.add_task(
@@ -67,7 +71,7 @@ def translate_convert_text(path=None):
         for part in processed_script:
             # progress.update(convert_progress, advance=1, description=f"{speaker}")
             speaker = part[0]
-            text = ""
+
             text = "" + speaker + ": "
 
             for chunk in part[1]:
@@ -98,15 +102,16 @@ def translate_convert_text(path=None):
         progress.stop()
         typer.echo("Conversion complete!")
 
+    return path_concat
 
-def split_by_speaker_and_length(path):
+
+def split_by_speaker_and_length(path="", max_length=4000):
     with open(path, "r") as f:
         text = f.read()
 
     # Split text into complete sentences
     split_by_speaker = text.split("$$")
 
-    max_length = 4000
     ordered_script = []
 
     for part in split_by_speaker:
@@ -115,8 +120,9 @@ def split_by_speaker_and_length(path):
         speaker, text = part.split(":", 1)
         speaker = speaker.strip()
 
-        sentences = re.split(r"[.!?？。！]", text)
-
+        # sentences = re.split(r"(?<=[.!?？。！])", text)
+        sentences = re.split(r'(?<=[.!?？。！]) +', text)
+        # console.print(sentences)
         chunked_text = []
         chunk = ""
         for sentence in sentences:
@@ -124,7 +130,7 @@ def split_by_speaker_and_length(path):
                 chunk += sentence
             else:
                 chunk = chunk
-                chunked_text.append(chunk + ".")
+                chunked_text.append(chunk)
                 chunk = sentence
         if chunk.strip():
             chunked_text.append(chunk)
