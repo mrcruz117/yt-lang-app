@@ -6,3 +6,4 @@ text_to_speech/*
 __pycache__/
 database.json
 .env
+.DS_Store
