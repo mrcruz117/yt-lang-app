@@ -12,6 +12,9 @@ from rich.progress import (
 from rich.console import Console
 import assemblyai as aai
 from db.db_funcs import get_title_id_dict, get_media_info
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 AAI_API_KEY = os.getenv("AAI_API_KEY")
@@ -29,7 +32,7 @@ progress = Progress(
 )
 
 
-def transcribe_audio(lang=""):
+def transcribe_audio(audio_path=""):
 
     all_items = os.listdir("downloads")
     file_choices = [item for item in all_items if item.endswith(".mp3")]
@@ -38,10 +41,11 @@ def transcribe_audio(lang=""):
         typer.echo("No files to convert.")
         return
     else:
-        file = questionary.select(
-            "Please choose a file to convert level:", choices=file_choices
-        ).ask()
-        audio_path = f"downloads/{file}"
+        if not audio_path:
+            file = questionary.select(
+                "Please choose a file to convert level:", choices=file_choices
+            ).ask()
+            audio_path = f"downloads/{file}"
 
     expected_speaker_count = questionary.select(
         "How many speakers are in the audio?", choices=["1", "2", "3", "4", "5"]
@@ -50,7 +54,7 @@ def transcribe_audio(lang=""):
 
     title_dict = get_title_id_dict()
     # remove the .mp3 extension
-    title = file[:-4]
+    title = os.path.basename(audio_path)[:-4]
     vid_uuid = title_dict[title]
 
     info = get_media_info(vid_uuid)
@@ -63,6 +67,7 @@ def transcribe_audio(lang=""):
         speakers_expected=expected_speaker_count,
         speech_model=aai.SpeechModel.nano,
         # language_code="en-US",
+        punctuate=True,
     )
     with progress:
         text_progress = progress.add_task("[blue]Converting to text: ", total=len_in_ms)
@@ -88,3 +93,5 @@ def transcribe_audio(lang=""):
         progress.stop()
         console.print("[green]✅ Transcription Complete![/green]")
         os.system("rm -rf chunks/*")
+
+    return f"transcriptions/{vid_uuid}.txt"
